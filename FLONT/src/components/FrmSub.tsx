@@ -47,15 +47,25 @@ const Sub: React.FC = () => {
     while (textC.length < 4) {
       textC = "0" + textC;  //textCが4文字未満の場合、先頭に0を追加
     }
-    const response = await axios.post("http://localhost:3000/api/post/page", {
+    // 行があるかチェックする
+    let responce = await axios.get("http://localhost:3000/api/get/page", {
+      params: {
+        code: textC,
+      }
+    })
+    // 行があったら終了
+    if (responce.data.data.length === 1) {
+      alert("コードが存在します")
+      return;
+    }
+    responce = await axios.post("http://localhost:3000/api/post/page", {
       data: { code: textC, name: textN },
     });
-    console.log(response.data.data.affectedRows); 
-    if (response.data.data.affectedRows === 0) { //返ってきた追加した行のデータが0だった場合アラートを表示
-      alert("登録が失敗しました");
-    } else {
+    if (responce.status === 200) { 
       alert("登録が成功しました");
       navigate("/");
+    } else {
+      alert("登録が失敗しました");
     }
   };
 
