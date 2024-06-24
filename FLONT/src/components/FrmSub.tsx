@@ -14,8 +14,8 @@ import {
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import CloseIcon from '@mui/icons-material/Close';
-import nsx from "./f80ee097b517eaa8266cd443a7e9087e.jpg";
-import legend from "./911aa11ea7a993d341ebe66533d020c0.jpg";
+import nsx from "./NSX.jpg";
+import legend from "./LEGEND.jpg";
 import{motion} from "framer-motion";
 const Sub: React.FC = () => {
   const location = useLocation();
@@ -23,34 +23,38 @@ const Sub: React.FC = () => {
   const { handleSubmit } = useForm();
   const { code, name } = location.state || {}; //frmMainからcode,nameのステートを受け取る
 
-  let   [textC, setTextC] = useState<string>(code || ""); //後にtextCの値に変化があるためletで定義
-  const [textN, setTextN] = useState<string>(name || "");
+  let   [textCode, setTextCode] = useState<string>(code || ""); //後にtextCodeの値に変化があるためletで定義
+  const [textName, setTextName] = useState<string>(name || "");
   const [isEdit, setIsEdit] = useState(false);
   const [show, setShow] = useState(false); //パスワード入力画面表示の有無
   const [password, setPassword] = useState(""); //入力されたパスワードの値を記憶
   const [isOK, setisOK] = useState(false); //パスワードが合致してるかどうか
-  const [pic, setpic] = useState(nsx); //画面の状態管理
-  const h1 = pic === nsx ? "#ff9830" : "#ffffff"; //ヘッダーの色に基づいて設定
+  const [picture, setPicture] = useState(nsx); //画面の状態管理
+  const h1 = picture === nsx ? "#ff9830" : "#ffffff"; //ヘッダーの色に基づいて設定
   
-  useEffect(() => { //textCに値が存在していた場合に更新処理をfalse
-    if (textC === code) {
-      setIsEdit(false);
-    } else {
+  useEffect(() => { //textCodeに値が存在していた場合に更新処理をfalse
+    if (textCode === code) {
       setIsEdit(true);
+    } else {
+      setIsEdit(false);
     }
-  }, [textC]);
-  const addDatas = async () => { //textCまたはtextNの入力フィールドが空だった場合に処理を中止する
-    if (!textC || !textN) {
-      alert("コードまたは名前を入力してください");
+  }, [textCode]);
+  const addDatas = async () => { //textCodeまたはtextNameの入力フィールドが空だった場合に処理を中止する
+    if (!textCode) {
+      alert("コードを入力してください");
       return;
     }
-    while (textC.length < 4) {
-      textC = "0" + textC;  //textCが4文字未満の場合、先頭に0を追加
+    if(!textName){
+      alert("名前を入力してください");
+      return;
+    }
+    while (textCode.length < 4) {
+      textCode = "0" + textCode;  //textCodeが4文字未満の場合、先頭に0を追加
     }
     // 行があるかチェックする
     let responce = await axios.get("http://localhost:3000/api/get/page", {
       params: {
-        code: textC,
+        code: textCode,
       }
     })
     // 行があったら終了
@@ -59,24 +63,33 @@ const Sub: React.FC = () => {
       return;
     }
     responce = await axios.post("http://localhost:3000/api/post/page", {
-      data: { code: textC, name: textN },
+      data: { code: textCode, name: textName },
     });
     if (responce.status === 200) { 
+    const response = await axios.post("http://localhost:3000/api/post/page", {
+      data: { code: textCode, name: textName },
+    });
+    console.log(response.data.data.affectedRows); 
+    if (response.data.data.affectedRows === 0) { //返ってきた追加した行のデータが0だった場合アラートを表示
+      alert("既に同じコードが存在しています");
+    } else {
       alert("登録が成功しました");
       navigate("/");
-    } else {
-      alert("登録が失敗しました");
     }
   };
 
   const editDatas = async () => {
-    if (!textC || !textN) {
-      alert("コードまたは名前を入力してください");
+    if (!textCode) {
+      alert("コードを入力してください");
+      return;
+    }
+    if(!textName){
+      alert("名前を入力してください");
       return;
     }
     try {
       await axios.put("http://localhost:3000/api/put/page", {
-        data: { code: textC, name: textN },
+        data: { code: textCode, name: textName },
       });
       alert("更新が成功しました");
       navigate("/");
@@ -89,7 +102,7 @@ const Sub: React.FC = () => {
   const deleteDatas = async () => {
     try {
       await axios.delete("http://localhost:3000/api/delete/page", {
-        data: { code: textC },
+        data: { code: textCode },
       });
       alert("削除が成功しました");
       navigate("/");
@@ -108,28 +121,28 @@ const Sub: React.FC = () => {
         setisOK(true);
         // パスワードが合っていたら削除処理をここで実行
         deleteDatas();
-        console.log("認証成功");
+        
       } else {
         setisOK(false);
-        console.log("認証失敗");
+        alert("認証失敗");
       }
     } catch (error) {
       console.error("エラーが発生しました", error);
     }
     setShow(false);
   };
-  const checksetC = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkSetCode = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // 半角文字のみの入力しか受け付けず、半角で文字数を4文字に設定
+    //半角数字4ケタに制限
     if (/^\d{0,4}$/.test(value)) {
-      setTextC(value);
+      setTextCode(value);
     }
   };
-  const checksetN = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const checkSetName = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     //全角、半角関係なく文字数を30文字に制限
     if (/^.{0,30}$/.test(value)) {
-      setTextN(value);
+      setTextName(value);
     }
   };
   const back = () => {
@@ -137,17 +150,17 @@ const Sub: React.FC = () => {
   };
 
   //ステートに画像ファイルを保管、スイッチを切り替えたときに更新値に他の画像を代入し切り替える
-  const changepic = () => {
-    if (pic === nsx) {
-      setpic(legend);
+  const changePicture = () => {
+    if (picture === nsx) {
+      setPicture(legend);
     } else {
-      setpic(nsx);
+      setPicture(nsx);
     }
   };
   return (
     <div
       style={{
-        backgroundImage: `url(${pic})`, //picに保管されている現状値を背景画像に設定
+        backgroundImage: `url(${picture})`, //pictureに保管されている現状値を背景画像に設定
         backgroundSize: "cover", // 背景画像をコンテナに合わせてサイズ調整
         backgroundPosition: "center", // 背景画像を中央に配置
         height: "100vh", // コンテナの高さを画面全体に設定
@@ -181,10 +194,10 @@ const Sub: React.FC = () => {
             justifyContent="center"
           >
             <TextField
-              value={textC}
+              value={textCode}
               variant="outlined"
-              onChange={checksetC}
-              disabled={!isEdit}
+              onChange={checkSetCode}
+              disabled={isEdit}
               style={{
                 backgroundColor: "#ffffff",
                 width: "70px", // 幅を設定
@@ -193,9 +206,9 @@ const Sub: React.FC = () => {
             />
             <Box sx={{ marginBottom: 5 }} />
             <TextField
-              value={textN}
+              value={textName}
               variant="outlined"
-              onChange={checksetN}
+              onChange={checkSetName}
            
               style={{
                 backgroundColor: "#ffffff",
@@ -224,12 +237,12 @@ const Sub: React.FC = () => {
             <Button
               variant="contained"
               size="large"
-              onClick={handleSubmit(isEdit ? addDatas : editDatas)}
+              onClick={handleSubmit(isEdit ? editDatas : addDatas )}
             >
-              {isEdit ? "登録" : "更新"}
+              {isEdit ? "更新" : "登録"}
             </Button>
 
-            {!isEdit && (
+            {isEdit && (
               <Button
                 variant="contained"
                 color="secondary"
@@ -243,7 +256,7 @@ const Sub: React.FC = () => {
               </Button>
             )}
             
-            <Switch onChange={changepic} color="warning" />
+            <Switch onChange={changePicture} color="warning" />
           </Box>
         </Box>
       </Grid>
@@ -277,6 +290,7 @@ const Sub: React.FC = () => {
         </DialogActions>
       </Dialog>
       
+
       {isOK && (
         <div>
           <p>削除が認証されました</p>
